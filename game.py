@@ -5,7 +5,7 @@ def play(snake):
     pygame.init()
     resolution = (600, 600)
 
-    board_size = 25
+    board_size = 15
     tile_size = (resolution[0] / board_size, resolution[1] / board_size)
 
     window = pygame.display.set_mode(resolution)
@@ -25,13 +25,13 @@ def play(snake):
                 on = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
-                    snake.change_direction(0)
+                    snake.change_orientation(0)
                 elif event.key == pygame.K_RIGHT:
-                    snake.change_direction(1)
+                    snake.change_orientation(1)
                 elif event.key == pygame.K_DOWN:
-                    snake.change_direction(2)
+                    snake.change_orientation(2)
                 elif event.key == pygame.K_LEFT:
-                    snake.change_direction(3)
+                    snake.change_orientation(3)
 
         window.fill(white)
 
@@ -54,9 +54,14 @@ def play(snake):
                              red,
                              (snake.apple.x * tile_size[0], snake.apple.y * tile_size[1], tile_size[0], tile_size[1]),
                              1)
+        trace = []
+        for line in snake.path:
+            trace.append([line[0] * tile_size[0] + int(tile_size[0] / 2), line[1] * tile_size[0] + int(tile_size[1] / 2)])
+        if len(trace) > 0:
+            pygame.draw.polygon(window, blue, trace + trace[::-1], 1)
 
         if snake.alive:
-            snake.move()
+            snake.ping_to_move()
 
         pygame.display.update()
         clock.tick(fps)
