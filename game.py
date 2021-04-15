@@ -3,10 +3,9 @@ import pygame
 
 def play(snake):
     pygame.init()
-    resolution = (600, 600)
+    resolution = (800, 800)
 
-    board_size = 15
-    tile_size = (resolution[0] / board_size, resolution[1] / board_size)
+    tile_size = (resolution[0] / snake.bounds[0], resolution[1] / snake.bounds[1])
 
     window = pygame.display.set_mode(resolution)
     clock = pygame.time.Clock()
@@ -64,5 +63,5 @@ def play(snake):
             snake.ping_to_move()
 
         pygame.display.update()
-        clock.tick(fps)
+        # clock.tick(fps)
     pygame.quit()

@@ -70,7 +70,10 @@ class SnakeBFS(Snake):
         else:
             direction = (self.coords[0]-self.tail[-1][0], self.coords[1]-self.tail[-1][1])
             for possible_dir in moveset:
-                if (self.coords[0] + possible_dir[0], self.coords[1] + possible_dir[1]) not in self.tail:
+                possible_place = (self.coords[0] + possible_dir[0], self.coords[1] + possible_dir[1])
+                if possible_place not in self.tail \
+                        and possible_place[0] >= 0 and possible_place[1] >= 0 \
+                        and possible_place[0] < self.bounds[0] and possible_place[1] < self.bounds[1]:
                     direction = possible_dir
             self.move(direction)
 
@@ -78,7 +81,7 @@ class SnakeBFS(Snake):
         self.path = []
         start_time = time.time()
         node = self.bfs((self.apple.x, self.apple.y))
-        print(f'BFS took {time.time() - start_time} time to calculate')
+        print(f'BFS took {time.time() - start_time} seconds to calculate')
         while node is not None and node.name is not self.coords:
             self.path = [node.name] + self.path
             node = node.root
