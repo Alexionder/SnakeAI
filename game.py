@@ -27,7 +27,7 @@ def get_tile_rects(snake, index, tile_size, edge_size):
     return rects
 
 
-def play(snake):
+def play(snake, hold=True):
     pygame.init()
     resolution = (600, 600)
 
@@ -94,6 +94,8 @@ def play(snake):
 
         if snake.alive:
             snake.ping_to_move()
+        elif not hold:
+            on = False
 
         pygame.display.update()
         # clock.tick(fps)

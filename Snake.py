@@ -15,6 +15,9 @@ class Snake:
         self.alive = True
         self.score = 0
         self.calc_time = []
+        self.start_time = time.time()
+        self.runtime = 0
+        self.death_reason = ""
 
     def ping_to_move(self):
         self.move(moveset[self.orientation])
@@ -47,16 +50,17 @@ class Snake:
 
     def check_collision(self):
         if len(set(self.tail[:] + [self.coords])) < len(self.tail[:] + [self.coords]):
-            print("collided")
-            self.die()
+            self.die("collided")
         if self.coords[0] < 0 or self.coords[1] < 0 or \
                 self.coords[0] >= self.bounds[0] or self.coords[1] >= self.bounds[1]:
-            print("out of bounds")
-            self.die()
+            self.die("out of bounds")
 
-    def die(self):
+    def die(self, reason):
+        # print(reason)
+        self.death_reason = reason
+        self.runtime = time.time() - self.start_time
         self.alive = False
-        print(f'Died with score: {self.score}')
+        # print(f'Died with score: {self.score}')
 
 
 class SnakeWithPath(Snake):
@@ -96,7 +100,8 @@ class SnakeBFS(SnakeWithPath):
         self.path = []
         start_time = time.time()
         node = self.bfs((self.apple.x, self.apple.y))
-        print(f'BFS took {time.time() - start_time} seconds to calculate')
+        # print(f'BFS took {time.time() - start_time} seconds to calculate')
+        self.calc_time.append(time.time() - start_time)
         while node is not None and node.pos is not self.coords:
             self.path = [node.pos] + self.path
             node = node.root
@@ -125,7 +130,8 @@ class SnakeDFS(SnakeWithPath):
         self.path = []
         start_time = time.time()
         node = self.dfs((self.apple.x, self.apple.y))
-        print(f'DFS took {time.time() - start_time} seconds to calculate')
+        # print(f'DFS took {time.time() - start_time} seconds to calculate')
+        self.calc_time.append(time.time() - start_time)
         while node is not None and node.pos is not self.coords:
             self.path = [node.pos] + self.path
             node = node.root
@@ -153,7 +159,8 @@ class SnakeAStar(SnakeWithPath):
     def calculate_new_path(self):
         start_time = time.time()
         self.path = self.astar_search((self.apple.x, self.apple.y))
-        print(f'A* took {time.time() - start_time} seconds to calculate')
+        # print(f'A* took {time.time() - start_time} seconds to calculate')
+        self.calc_time.append(time.time() - start_time)
 
     def astar_search(self, goal):
 
@@ -237,4 +244,4 @@ class Apple:
         self.y = random.randint(0, self.bounds[1] - 1)
         if (self.x, self.y) in occupied:
             self.change_position(occupied)
-        print(f'Apple moved to x {self.x} y {self.y}')
+        # print(f'Apple moved to x {self.x} y {self.y}')
