@@ -1,5 +1,6 @@
 import random, time
 from helpers import Node
+
 moveset = [[0, -1], [1, 0], [0, 1], [-1, 0]]  # up, right, down, left
 
 
@@ -13,6 +14,7 @@ class Snake:
         self.apple = apple
         self.alive = True
         self.score = 0
+        self.calc_time = []
 
     def ping_to_move(self):
         self.move(moveset[self.orientation])
@@ -20,12 +22,12 @@ class Snake:
     def move(self, direction):
         self.tail.append(self.coords[:])
         if len(self.tail) > self.tail_size:
-            for i in range(len(self.tail)-self.tail_size):
+            for i in range(len(self.tail) - self.tail_size):
                 self.tail.pop(0)
 
         self.coords = list(self.coords)
-        self.coords[0] = (self.coords[0] + direction[0]) # % self.bounds[0]
-        self.coords[1] = (self.coords[1] + direction[1]) # % self.bounds[1]
+        self.coords[0] = (self.coords[0] + direction[0])  # % self.bounds[0]
+        self.coords[1] = (self.coords[1] + direction[1])  # % self.bounds[1]
         self.coords = tuple(self.coords)
 
         if self.coords == (self.apple.x, self.apple.y):
@@ -57,7 +59,7 @@ class Snake:
         print(f'Died with score: {self.score}')
 
 
-class SnakeBFS(Snake):
+class SnakeWithPath(Snake):
     path = []
 
     def ping_to_move(self):
@@ -68,7 +70,7 @@ class SnakeBFS(Snake):
             self.move(direction)
             self.path.pop(0)
         else:
-            direction = (self.coords[0]-self.tail[-1][0], self.coords[1]-self.tail[-1][1])
+            direction = (self.coords[0] - self.tail[-1][0], self.coords[1] - self.tail[-1][1])
             for possible_dir in moveset:
                 possible_place = (self.coords[0] + possible_dir[0], self.coords[1] + possible_dir[1])
                 if possible_place not in self.tail \
@@ -76,15 +78,6 @@ class SnakeBFS(Snake):
                         and possible_place[0] < self.bounds[0] and possible_place[1] < self.bounds[1]:
                     direction = possible_dir
             self.move(direction)
-
-    def calculate_new_path(self):
-        self.path = []
-        start_time = time.time()
-        node = self.bfs((self.apple.x, self.apple.y))
-        print(f'BFS took {time.time() - start_time} seconds to calculate')
-        while node is not None and node.name is not self.coords:
-            self.path = [node.name] + self.path
-            node = node.root
 
     def get_neighbors(self, place):
         neighbors = []
@@ -96,6 +89,18 @@ class SnakeBFS(Snake):
                 neighbors.append(neighbor)
         return neighbors
 
+
+class SnakeBFS(SnakeWithPath):
+
+    def calculate_new_path(self):
+        self.path = []
+        start_time = time.time()
+        node = self.bfs((self.apple.x, self.apple.y))
+        print(f'BFS took {time.time() - start_time} seconds to calculate')
+        while node is not None and node.pos is not self.coords:
+            self.path = [node.pos] + self.path
+            node = node.root
+
     def bfs(self, goal):
 
         visited, queue = set(), [Node(None, self.coords)]
@@ -104,15 +109,120 @@ class SnakeBFS(Snake):
         while queue:
 
             vertex = queue.pop(0)
-            # print(str(vertex) + " ", end='\n')
-            if vertex.name == goal:
+            if vertex.pos == goal:
                 return vertex
 
-            for neighbour in self.get_neighbors(vertex.name):
+            for neighbour in self.get_neighbors(vertex.pos):
                 if neighbour not in visited:
                     visited.add(neighbour)
                     queue.append(Node(vertex, neighbour))
         return None
+
+
+class SnakeDFS(SnakeWithPath):
+
+    def calculate_new_path(self):
+        self.path = []
+        start_time = time.time()
+        node = self.dfs((self.apple.x, self.apple.y))
+        print(f'DFS took {time.time() - start_time} seconds to calculate')
+        while node is not None and node.pos is not self.coords:
+            self.path = [node.pos] + self.path
+            node = node.root
+
+    def dfs(self, goal):
+
+        visited, queue = set(), [Node(None, self.coords)]
+        visited.add(self.coords)
+
+        while queue:
+
+            vertex = queue.pop()
+            if vertex.pos == goal:
+                return vertex
+
+            for neighbour in self.get_neighbors(vertex.pos):
+                if neighbour not in visited:
+                    visited.add(neighbour)
+                    queue.append(Node(vertex, neighbour))
+        return None
+
+
+class SnakeAStar(SnakeWithPath):
+
+    def calculate_new_path(self):
+        start_time = time.time()
+        self.path = self.astar_search((self.apple.x, self.apple.y))
+        print(f'A* took {time.time() - start_time} seconds to calculate')
+
+    def astar_search(self, goal):
+
+        open = []
+        closed = []
+
+        start_node = Node(None, self.coords)
+        goal_node = Node(None, goal)
+
+        open.append(start_node)
+
+        while len(open) > 0:
+
+            open.sort()
+
+            current_node = open.pop(0)
+
+            closed.append(current_node)
+
+
+            if current_node == goal_node:
+                path = []
+                while current_node != start_node:
+                    path.append(current_node.pos)
+                    current_node = current_node.root
+                # Return reversed path
+                return path[::-1]
+
+            (x, y) = current_node.pos
+
+            neighbors = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
+
+            for next in neighbors:
+
+                if not self.is_reachable(next):
+                    continue
+
+                neighbor = Node(current_node, next)
+
+                if neighbor in closed:
+                    continue
+                # Generate heuristics (Manhattan distance)
+                neighbor.g = abs(neighbor.pos[0] - start_node.pos[0]) + abs(
+                    neighbor.pos[1] - start_node.pos[1])
+                neighbor.h = abs(neighbor.pos[0] - goal_node.pos[0]) + abs(
+                    neighbor.pos[1] - goal_node.pos[1])
+                neighbor.f = neighbor.g + neighbor.h
+                # Check if neighbor is in open list and if it has a lower f value
+                if self.add_to_open(open, neighbor):
+                    # Everything is green, add neighbor to open list
+                    open.append(neighbor)
+
+        return []
+
+    def is_reachable(self, pos):
+        if pos in self.tail:
+            return False
+        if pos[0] < 0 or pos[1] < 0:
+            return False
+        if pos[0] >= self.bounds[0] or pos[1] >= self.bounds[1]:
+            return False
+        return True
+
+    @staticmethod
+    def add_to_open(open, neighbor):
+        for node in open:
+            if neighbor == node and neighbor.f >= node.f:
+                return False
+        return True
 
 
 class Apple:
@@ -123,8 +233,8 @@ class Apple:
         self.change_position([])
 
     def change_position(self, occupied):
-        self.x = random.randint(0, self.bounds[0]-1)
-        self.y = random.randint(0, self.bounds[1]-1)
+        self.x = random.randint(0, self.bounds[0] - 1)
+        self.y = random.randint(0, self.bounds[1] - 1)
         if (self.x, self.y) in occupied:
             self.change_position(occupied)
         print(f'Apple moved to x {self.x} y {self.y}')

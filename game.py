@@ -1,15 +1,41 @@
 import pygame
 
 
+def get_tile_rects(snake, index, tile_size, edge_size):
+    rects = []
+    for neighbor in [snake[index - 1] if index > 0 else None, snake[index + 1] if index < len(snake) - 1 else None]:
+        if neighbor is not None:
+            xoff = edge_size
+            yoff = edge_size
+            width_off = -edge_size * 2
+            height_off = -edge_size * 2
+            direction = (neighbor[0] - snake[index][0], neighbor[1] - snake[index][1])
+            if direction == (0, -1):
+                yoff = 0
+                height_off += edge_size
+            elif direction == (1, 0):
+                width_off = 0
+            elif direction == (0, 1):
+                height_off = 0
+            elif direction == (-1, 0):
+                xoff = 0
+                width_off += edge_size
+            rects.append((snake[index][0] * tile_size[0] + xoff,
+                          snake[index][1] * tile_size[1] + yoff,
+                          tile_size[0] + width_off,
+                          tile_size[1] + height_off))
+    return rects
+
+
 def play(snake):
     pygame.init()
-    resolution = (800, 800)
+    resolution = (600, 600)
 
     tile_size = (resolution[0] / snake.bounds[0], resolution[1] / snake.bounds[1])
 
     window = pygame.display.set_mode(resolution)
     clock = pygame.time.Clock()
-    fps = 10
+    fps = 25
 
     red = (234, 11, 11)
     green = (11, 234, 11)
@@ -37,25 +63,32 @@ def play(snake):
         if snake.apple is not None:
             pygame.draw.rect(window,
                              red,
-                             (snake.apple.x*tile_size[0], snake.apple.y*tile_size[1], tile_size[0], tile_size[1]))
+                             (snake.apple.x * tile_size[0], snake.apple.y * tile_size[1], tile_size[0], tile_size[1]))
 
-        pygame.draw.rect(window,
-                         green,
-                         (snake.coords[0]*tile_size[0], snake.coords[1]*tile_size[1], tile_size[0], tile_size[1]))
+        # pygame.draw.rect(window,
+        #                  green,
+        #                  get_tile_rect(snake.tail[:] + [snake.coords], len(snake.tail), tile_size))
+        #
+        # for tile, i in zip(snake.tail, range(len(snake.tail))):
+        #     pygame.draw.rect(window,
+        #                      green,
+        #                      # (11 + int((1 - i / len(snake.tail)) * 150), 234, 11 + int((1 - i / len(snake.tail)) * 150))
+        #                      get_tile_rect(snake.tail[:] + [snake.coords], i, tile_size))
 
-        for tile in snake.tail:
-            pygame.draw.rect(window,
-                             green,
-                             (tile[0] * tile_size[0], tile[1] * tile_size[1], tile_size[0], tile_size[1]))
+        for tile, i in zip(snake.tail[:] + [snake.coords], range(len(snake.tail)+1)):
+            for rect in get_tile_rects(snake.tail[:] + [snake.coords], i, tile_size, 2):
+                pygame.draw.rect(window, green, rect)
 
         if snake.apple is not None:
             pygame.draw.rect(window,
                              red,
                              (snake.apple.x * tile_size[0], snake.apple.y * tile_size[1], tile_size[0], tile_size[1]),
                              1)
-        trace = []
+        trace = [[snake.coords[0] * tile_size[0] + int(tile_size[0] / 2),
+                  snake.coords[1] * tile_size[1] + int(tile_size[1] / 2)]]
         for line in snake.path:
-            trace.append([line[0] * tile_size[0] + int(tile_size[0] / 2), line[1] * tile_size[0] + int(tile_size[1] / 2)])
+            trace.append(
+                [line[0] * tile_size[0] + int(tile_size[0] / 2), line[1] * tile_size[0] + int(tile_size[1] / 2)])
         if len(trace) > 0:
             pygame.draw.polygon(window, blue, trace + trace[::-1], 1)
 
@@ -65,3 +98,8 @@ def play(snake):
         pygame.display.update()
         # clock.tick(fps)
     pygame.quit()
+
+
+def play_no_visual(snake):
+    while snake.alive:
+        snake.ping_to_move()
