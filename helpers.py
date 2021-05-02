@@ -13,7 +13,7 @@ class Node:
 
     # Sort nodes
     def __lt__(self, other):
-        return self.f < other.f
+        return self.f > other.f
 
     def __str__(self):
         return f'{self.root.pos if self.root is not None else 0} -> ' \

@@ -65,39 +65,25 @@ def play(snake, hold=True):
                              red,
                              (snake.apple.x * tile_size[0], snake.apple.y * tile_size[1], tile_size[0], tile_size[1]))
 
-        # pygame.draw.rect(window,
-        #                  green,
-        #                  get_tile_rect(snake.tail[:] + [snake.coords], len(snake.tail), tile_size))
-        #
-        # for tile, i in zip(snake.tail, range(len(snake.tail))):
-        #     pygame.draw.rect(window,
-        #                      green,
-        #                      # (11 + int((1 - i / len(snake.tail)) * 150), 234, 11 + int((1 - i / len(snake.tail)) * 150))
-        #                      get_tile_rect(snake.tail[:] + [snake.coords], i, tile_size))
-
-        for tile, i in zip(snake.tail[:] + [snake.coords], range(len(snake.tail)+1)):
-            for rect in get_tile_rects(snake.tail[:] + [snake.coords], i, tile_size, 2):
+        for tile, i in zip(snake.tail[:] + [snake.pos], range(len(snake.tail)+1)):
+            for rect in get_tile_rects(snake.tail[:] + [snake.pos], i, tile_size, 2):
                 pygame.draw.rect(window, green, rect)
 
-        if snake.apple is not None:
-            pygame.draw.rect(window,
-                             red,
-                             (snake.apple.x * tile_size[0], snake.apple.y * tile_size[1], tile_size[0], tile_size[1]),
-                             1)
-        trace = [[snake.coords[0] * tile_size[0] + int(tile_size[0] / 2),
-                  snake.coords[1] * tile_size[1] + int(tile_size[1] / 2)]]
+        trace = [[snake.pos[0] * tile_size[0] + int(tile_size[0] / 2),
+                  snake.pos[1] * tile_size[1] + int(tile_size[1] / 2)]]
         for line in snake.path:
             trace.append(
                 [line[0] * tile_size[0] + int(tile_size[0] / 2), line[1] * tile_size[0] + int(tile_size[1] / 2)])
         if len(trace) > 0:
             pygame.draw.polygon(window, blue, trace + trace[::-1], 1)
 
+
+
+        pygame.display.update()
         if snake.alive:
             snake.ping_to_move()
         elif not hold:
             on = False
-
-        pygame.display.update()
         # clock.tick(fps)
     pygame.quit()
 
